@@ -55,6 +55,7 @@ export const apiClient = axios.create({
   baseURL: apiBaseUrl,
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
+  timeout: 8000, // 8 giây timeout để ngăn ngừa việc treo vô hạn khi các API cơ bản (như authentication) gặp sự cố
 });
 
 // Attach access token from httpOnly cookie (read via js-cookie)

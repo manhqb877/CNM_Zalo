@@ -19,6 +19,7 @@ import {
 } from './reminders/reminder.controller';
 import { assistantRouter } from './assistant/assistant.routes';
 import { searchAssistantMessagesHandler } from './assistant/assistant.controller';
+import { chatWithAiHandler, educationAiHandler } from './ai-chat.controller';
 
 export const aiRouter = Router();
 
@@ -86,6 +87,10 @@ aiRouter.delete('/reminders/:reminderId', authenticate, deleteReminderHandler);
 
 // GET /api/ai/search/messages?q=...
 aiRouter.get('/search/messages', authenticate, searchAssistantMessagesHandler);
+
+// ─── AI Chat & Education AI ──────────────────────────────────────────────────
+aiRouter.post('/chat', authenticate, chatWithAiHandler);
+aiRouter.post('/education', authenticate, educationAiHandler);
 
 // ─── AI Assistant Box ────────────────────────────────────────────────────────────
 aiRouter.use('/assistant', assistantRouter);

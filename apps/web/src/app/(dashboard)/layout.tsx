@@ -18,6 +18,7 @@ import { clearAccessToken, getAccessToken } from '@/utils/auth-token';
 import { getSocket } from '@/services/socket';
 import { useAiAssistant } from '@/hooks/use-ai-assistant';
 import { AiAssistantBox } from '@/components/ai-assistant/ai-assistant-box';
+import EducationAiModal from '@/components/ai-assistant/EducationAiModal';
 
 type DashboardAppearanceSettings = {
   theme: 'dark' | 'light';
@@ -46,6 +47,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [authError, setAuthError] = useState<string | null>(profileStore.error);
   const [authPhase, setAuthPhase] = useState<'checking' | 'unauthenticated' | 'ready' | 'error'>('checking');
   const [isHydrated, setIsHydrated] = useState(false);
+  const [isEduAiOpen, setIsEduAiOpen] = useState(false);
   const onboardingRedirectedRef = useRef(false);
 
   // Load appearance settings
@@ -402,6 +404,31 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             onLoadMoreTasks={() => aiAssistant.loadTasks(false)}
           />
         </div>
+
+        {/* Zync Education AI FAB & Modal */}
+        <div className="fixed bottom-6 right-6 z-[999]">
+          <button
+            type="button"
+            onClick={() => setIsEduAiOpen(true)}
+            className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 text-white shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 transition-all duration-300 hover:scale-110 active:scale-95 group relative"
+            title="Mở Zync Edu AI"
+            aria-label="Mở Trợ lý Giáo dục AI"
+          >
+            {/* Pulsating Ring */}
+            <span className="absolute inset-0 rounded-2xl bg-emerald-400/30 animate-ping opacity-75 group-hover:animate-none" />
+            <Sparkles className="h-6 w-6 relative z-10 text-white animate-pulse" />
+            
+            {/* Label Tooltip */}
+            <span className="absolute right-16 top-1/2 -translate-y-1/2 scale-0 group-hover:scale-100 transition-all duration-200 origin-right rounded-xl bg-zinc-900/90 text-white text-xs font-bold px-3 py-1.5 shadow-md border border-white/10 pointer-events-none whitespace-nowrap">
+              🎓 Zync Edu AI
+            </span>
+          </button>
+        </div>
+
+        <EducationAiModal
+          isOpen={isEduAiOpen}
+          onClose={() => setIsEduAiOpen(false)}
+        />
       </main>
     </MediaViewerProvider>
   );

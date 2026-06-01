@@ -1,8 +1,9 @@
 'use client';
 
 import { type ChangeEvent, type ComponentType, type RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AlertCircle, Bot, CheckCircle2, ListChecks, HelpCircle, Bell, MessageSquare, Play, PenLine, RefreshCw, Sparkles, Heart, Phone, Video } from 'lucide-react';
+import { AlertCircle, Bot, CheckCircle2, ListChecks, HelpCircle, Bell, MessageSquare, Play, PenLine, RefreshCw, Sparkles, Heart, Phone, Video, Loader2, Send } from 'lucide-react';
 import type { AiCatchupDigest, Message, MessageStatus } from '@zync/shared-types';
+import { apiClient } from '@/services/api';
 import {
   Menu,
   MenuProvider,
@@ -169,46 +170,204 @@ function AuthorPostsSection({ conversation, currentUserId }: AuthorPostsSectionP
   }, [authorId, isGroupConversation]);
 
   if (isGroupConversation || !authorId) return null;
+ 
+   return (
+     <div className="mt-4 space-y-2 rounded-2xl border border-border bg-bg-card p-4">
+       <p className="text-sm font-semibold uppercase tracking-wide text-text-secondary flex items-center gap-1.5">
+         <PenLineIcon className="h-3.5 w-3.5" />
+         Bài viết gần đây
+       </p>
+ 
+       {loading ? (
+         <div className="space-y-2">
+           {Array.from({ length: 2 }).map((_, i) => (
+             <div key={i} className="h-12 animate-pulse rounded-lg bg-bg-hover" />
+           ))}
+         </div>
+       ) : posts.length === 0 ? (
+         <p className="text-xs text-text-tertiary">Chưa có bài viết nào</p>
+       ) : (
+         <div className="space-y-2">
+           {posts.map((post) => (
+             <button
+               key={post._id}
+               type="button"
+               onClick={() => router.push(`/community?postId=${post._id}`)}
+               className="block w-full rounded-lg border border-border bg-bg-hover p-3 text-left transition hover:border-accent"
+             >
+               <p className="line-clamp-2 text-sm text-text-primary">{post.title}</p>
+               <p className="mt-1 flex items-center gap-2 text-xs text-text-tertiary">
+                 <HeartIcon className="h-3 w-3" />
+                 {post.likesCount}
+                 <span className="mx-1">-</span>
+                 <PenLineIcon className="h-3 w-3" />
+                 {post.commentsCount}
+               </p>
+             </button>
+           ))}
+         </div>
+       )}
+     </div>
+   );
+ }
+ 
+// ==================== AI CHAT SIDEBAR SECTION ====================
+
+interface AiChatSidebarBodyProps {
+  conversationId?: string;
+  currentUserId?: string;
+}
+
+function AiChatSidebarBody({ conversationId, currentUserId }: AiChatSidebarBodyProps) {
+  const [messages, setMessages] = useState<Array<{ id: string; sender: 'user' | 'ai' | 'err'; text: string }>>([]);
+  const [inputValue, setInputValue] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Add default greeting
+    setMessages([
+      {
+        id: 'greet',
+        sender: 'ai',
+        text: 'Xin chào! Tôi là **Zync AI Assistant** ⚡\n\nTôi có thể giúp bạn tóm tắt cuộc trò chuyện hiện tại, xem danh sách thông tin bạn bè hoặc cập nhật bài đăng mới từ bạn bè của bạn nhờ vào kết nối CSDL trực tiếp!\n\nHãy chọn nhanh các đề xuất bên dưới hoặc hỏi tôi bất cứ điều gì.'
+      }
+    ]);
+  }, [conversationId]);
+
+  useEffect(() => {
+    scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isLoading]);
+
+  const handleSend = async (textToSend?: string) => {
+    const text = (textToSend || inputValue).trim();
+    if (!text) return;
+
+    if (!textToSend) setInputValue('');
+
+    const userMsgId = `user-${Date.now()}`;
+    setMessages(prev => [...prev, { id: userMsgId, sender: 'user', text }]);
+    setIsLoading(true);
+
+    try {
+      const response = await apiClient.post('/api/ai/chat', {
+        conversationId,
+        message: text
+      }, { timeout: 60000 });
+
+      const reply = response.data?.data?.reply || 'Hiện tại tôi không thể xử lý câu trả lời này.';
+      setMessages(prev => [...prev, { id: `ai-${Date.now()}`, sender: 'ai', text: reply }]);
+    } catch (err: any) {
+      const errMsg = err.response?.data?.error?.message || 'Có lỗi xảy ra khi kết nối tới Zync AI.';
+      setMessages(prev => [...prev, { id: `err-${Date.now()}`, sender: 'err', text: errMsg }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const formatMarkdown = (text: string) => {
+    return text
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/`(.*?)`/g, '<code class="bg-emerald-500/10 px-1 py-0.5 rounded text-emerald-500 font-mono text-xs">$1</code>')
+      .split('\n')
+      .join('<br />');
+  };
+
+  const sidebarChips = [
+    { label: '📝 Tóm tắt tin nhắn gần đây', prompt: 'Hãy tóm tắt các tin nhắn gần đây trong cuộc trò chuyện (khoảng 10-15 tin nhắn cuối).' },
+    { label: '📚 Tóm tắt cả đoạn chat', prompt: 'Hãy tóm tắt toàn bộ cuộc trò chuyện hiện tại (50 tin nhắn gần nhất) để tôi nắm bắt nội dung tổng quát.' },
+    { label: '👥 Thành viên trong nhóm', prompt: 'Hãy cho tôi biết danh sách tất cả thành viên trong nhóm chat này và vai trò (Admin/Member) của từng người.' },
+    { label: '👤 Bạn bè của tôi', prompt: 'Hỏi xem trong bạn bè của tôi có danh sách bao nhiêu bạn và thông tin chi tiết.' },
+    { label: '📰 Bài viết của bạn bè', prompt: 'Xem bạn bè của tôi có cập nhật bài viết mới hay đăng gì mới không?' }
+  ];
 
   return (
-    <div className="mt-4 space-y-2 rounded-2xl border border-border bg-bg-card p-4">
-      <p className="text-sm font-semibold uppercase tracking-wide text-text-secondary flex items-center gap-1.5">
-        <PenLineIcon className="h-3.5 w-3.5" />
-        Bài viết gần đây
-      </p>
+    <div className="flex-1 flex flex-col min-h-0 bg-bg-primary/10">
+      {/* Messages */}
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-4">
+        {messages.map((msg) => {
+          const isUser = msg.sender === 'user';
+          const isErr = msg.sender === 'err';
 
-      {loading ? (
-        <div className="space-y-2">
-          {Array.from({ length: 2 }).map((_, i) => (
-            <div key={i} className="h-12 animate-pulse rounded-lg bg-bg-hover" />
-          ))}
+          if (isErr) {
+            return (
+              <div key={msg.id} className="flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-500">
+                <AlertCircleIcon className="h-3.5 w-3.5 shrink-0" />
+                <p>{msg.text}</p>
+              </div>
+            );
+          }
+
+          return (
+            <div key={msg.id} className={`flex gap-2 max-w-[90%] ${isUser ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}>
+              {!isUser && (
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 text-white text-[10px] font-bold shadow-sm">
+                  AI
+                </div>
+              )}
+              <div className="space-y-0.5">
+                <div className={`rounded-2xl px-4 py-2.5 text-[13.5px] leading-relaxed shadow-sm border ${
+                  isUser 
+                    ? 'bg-emerald-500 text-white border-emerald-600 rounded-tr-none' 
+                    : 'bg-bg-card text-text-primary border-border rounded-tl-none'
+                }`}>
+                  <div dangerouslySetInnerHTML={{ __html: formatMarkdown(msg.text) }} className="font-medium whitespace-pre-line text-left" />
+                </div>
+              </div>
+            </div>
+          );
+        })}
+        {isLoading && (
+          <div className="flex gap-2 items-center text-xs font-bold text-text-secondary pl-9">
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-500" />
+            Zync AI đang phân tích dữ liệu...
+          </div>
+        )}
+      </div>
+
+      {/* Inputs */}
+      <div className="p-3 border-t border-border bg-bg-card/50 backdrop-blur-md shrink-0 space-y-3">
+        {/* Suggestion Chips */}
+        {messages.length <= 2 && (
+          <div className="flex flex-col gap-1.5">
+            {sidebarChips.map((chip, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleSend(chip.prompt)}
+                className="w-full text-left rounded-xl border border-border bg-bg-hover hover:border-emerald-500/30 hover:bg-emerald-500/5 px-3 py-2 text-xs font-semibold text-text-secondary hover:text-emerald-500 transition-all truncate"
+              >
+                {chip.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className="flex items-center gap-2">
+          <label className="flex-1 flex h-10 items-center gap-2 rounded-xl border border-border bg-bg-hover px-3 focus-within:border-emerald-500/50 focus-within:bg-bg-card transition-all">
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') void handleSend(); }}
+              placeholder="Hỏi Zync AI về cuộc chat, bạn bè..."
+              className="w-full bg-transparent text-[13.5px] font-medium text-text-primary outline-none placeholder:text-text-tertiary"
+              disabled={isLoading}
+            />
+          </label>
+          <button
+            onClick={() => handleSend()}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold hover:shadow-lg transition-all duration-200 disabled:opacity-50"
+            disabled={isLoading || !inputValue.trim()}
+          >
+            <Send className="h-4 w-4" />
+          </button>
         </div>
-      ) : posts.length === 0 ? (
-        <p className="text-xs text-text-tertiary">Chưa có bài viết nào</p>
-      ) : (
-        <div className="space-y-2">
-          {posts.map((post) => (
-            <button
-              key={post._id}
-              type="button"
-              onClick={() => router.push(`/community?postId=${post._id}`)}
-              className="block w-full rounded-lg border border-border bg-bg-hover p-3 text-left transition hover:border-accent"
-            >
-              <p className="line-clamp-2 text-sm text-text-primary">{post.title}</p>
-              <p className="mt-1 flex items-center gap-2 text-xs text-text-tertiary">
-                <HeartIcon className="h-3 w-3" />
-                {post.likesCount}
-                <span className="mx-1">-</span>
-                <PenLineIcon className="h-3 w-3" />
-                {post.commentsCount}
-              </p>
-            </button>
-          ))}
-        </div>
-      )}
+      </div>
     </div>
   );
 }
+
 
 // ==================== TYPES ====================
 
@@ -232,6 +391,7 @@ interface ChatPanelProps {
   onLoadMore?: () => Promise<void>;
   onBack?: () => void;
   onInfoClick?: () => void;
+  onAiChatClick?: () => void;
   onDeleteMessageForMe?: (messageId: string, idempotencyKey: string) => void;
   onRecallMessage?: (messageId: string, idempotencyKey: string) => void;
   onForwardMessage?: (message: Message) => void;
@@ -559,6 +719,7 @@ function ChatPanel({
   isLoading = false,
   error = null,
   onInfoClick,
+  onAiChatClick,
   onDeleteMessageForMe,
   onRecallMessage,
   onForwardMessage,
@@ -1115,6 +1276,14 @@ function ChatPanel({
             onClick={onStartVideoCall}
           >
             <VideoIcon className="w-5 h-5" />
+          </button>
+          <button
+            type="button"
+            className="chat-header-btn hover:text-emerald-500 hover:bg-emerald-500/10 transition-colors"
+            title="Trò chuyện với Zync AI"
+            onClick={onAiChatClick}
+          >
+            <SparklesIcon className="w-5 h-5 text-emerald-500 animate-pulse" />
           </button>
           <button
             type="button"
@@ -2067,6 +2236,7 @@ export function HomeDashboardChatPanel({
   const { openViewer } = useMediaViewer();
   const conversationItems = conversations ?? [];
   const [isInfoOpen, setIsInfoOpen] = useState(false);
+  const [isAiChatOpen, setIsAiChatOpen] = useState(false);
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
   const [isAddMembersOpen, setIsAddMembersOpen] = useState(false);
   const [isManageGroupOpen, setIsManageGroupOpen] = useState(false);
@@ -2098,6 +2268,7 @@ export function HomeDashboardChatPanel({
     setGroupManageSuccess(null);
     setIsArchiveOpen(false);
     setIsMembersViewOpen(false);
+    setIsAiChatOpen(false);
   }, [selectedConversationId]);
 
   const visibleConversations = conversationItems.filter(
@@ -2548,6 +2719,10 @@ export function HomeDashboardChatPanel({
             inputDisabledReason={isRemovedFromGroup ? 'Bạn đã bị xóa khỏi nhóm' : undefined}
             onBack={() => onSelectConversation('')}
             onInfoClick={handleToggleInfoPanel}
+            onAiChatClick={() => {
+              setIsAiChatOpen((prev) => !prev);
+              setIsInfoOpen(false); // Close normal info panel if AI chat is opened
+            }}
             onAvatarClick={handleOpenGroupAvatarPicker}
             onNameClick={() => {
               void handleChangeGroupName();
@@ -2924,6 +3099,35 @@ export function HomeDashboardChatPanel({
               )}
             </aside>
           )}
+
+        {isAiChatOpen && (
+          <aside className="relative hidden h-full w-[350px] shrink-0 border-l border-border bg-bg-card xl:flex xl:flex-col shadow-inner overflow-hidden transition-all duration-300">
+            {/* AI Sidebar Glowing Aura */}
+            <div className="absolute -right-16 -top-16 w-32 h-32 bg-emerald-500/10 rounded-full blur-[60px] pointer-events-none" />
+
+            {/* Sidebar Header */}
+            <div className="flex items-center justify-between border-b border-border px-5 py-4 shrink-0 bg-bg-card z-10">
+              <div className="flex items-center gap-2">
+                <SparklesIcon className="h-5 w-5 text-emerald-500 animate-pulse" />
+                <h3 className="text-lg font-bold text-text-primary">Zync AI Chat</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAiChatOpen(false)}
+                className="h-8 w-8 rounded-full border border-border bg-bg-hover text-text-secondary hover:bg-bg-active hover:text-text-primary flex items-center justify-center transition"
+                aria-label="Đóng AI Chat"
+              >
+                <CloseIcon className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Sidebar Chat Body */}
+            <AiChatSidebarBody 
+              conversationId={selectedConversationId} 
+              currentUserId={chatPanelProps.currentUserId} 
+            />
+          </aside>
+        )}
       </section>
 
       {isInfoOpen && (

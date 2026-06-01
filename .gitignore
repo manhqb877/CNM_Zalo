@@ -70,3 +70,4 @@ docs/
 apps/mobile/eas.json
 apps/mobile/eas.json
 apps/server/scripts/seed-month-data.ts
+*.env
