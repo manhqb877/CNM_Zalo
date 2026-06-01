@@ -3,7 +3,7 @@ import { KeyRound, X } from 'lucide-react';
 import type { DashboardIconName } from '../home-dashboard.types';
 import { DashboardIcon } from '../atoms/dashboard-icon';
 import { updateMyProfile, fetchFriendsCount, type MeUser } from '@/services/users';
-import { uploadFile } from '@/services/upload';
+import { uploadAvatar } from '@/services/users';
 import type { FriendUser } from '@/services/friends';
 import { changePassword } from '@/services/auth';
 import { ButtonSpinner, PageSkeleton } from '@/components/shared/loading-system';
@@ -210,10 +210,10 @@ export function HomeDashboardProfilePanel({
       if (avatarFile) {
         setIsUploadingAvatar(true);
         setAvatarUploadProgress(0);
-        avatarUrlToSave = await uploadFile(avatarFile, 'avatars', {
-          onProgress: (percent) => setAvatarUploadProgress(percent),
-        });
+        // Upload trực tiếp lên AWS S3 qua server, trả về URL S3
+        avatarUrlToSave = await uploadAvatar(avatarFile, (percent) => setAvatarUploadProgress(percent));
         setAvatarUploadProgress(100);
+        // avatarUrl đã được cập nhật trong DB bởi server → chỉ cần sync lại profile
       }
 
       const updated = await updateMyProfile({
@@ -233,8 +233,10 @@ export function HomeDashboardProfilePanel({
       setIsEditing(false);
     } catch (err) {
       const message = err instanceof Error ? err.message : '';
-      if (message.toLowerCase().includes('invalid api key') || message.toLowerCase().includes('invalid signature')) {
-        setSaveError('Không thể upload ảnh đại diện do cấu hình Cloudinary không hợp lệ. Vui lòng kiểm tra CLOUDINARY_* trong server.');
+      if (message.includes('File quá lớn')) {
+        setSaveError(message);
+      } else if (message.includes('Định dạng file không hỗ trợ')) {
+        setSaveError(message);
       } else {
         setSaveError('Cập nhật hồ sơ thất bại. Vui lòng thử lại.');
       }
@@ -407,7 +409,7 @@ export function HomeDashboardProfilePanel({
                   {isUploadingAvatar && (
                     <div className="mt-3 rounded-lg border border-[var(--border)] bg-[var(--bg-hover)] p-2.5">
                       <div className="mb-1 flex items-center justify-between text-xs text-[var(--text-secondary)]">
-                        <span>Đang tải ảnh đại diện</span>
+                        <span>Đang tải ảnh lên S3...</span>
                         <span>{avatarUploadProgress}%</span>
                       </div>
                       <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--bg-hover)]">

@@ -16,6 +16,7 @@ import {
   getAccountSettingsHandler,
   updateAccountSettingsHandler,
 } from './users.controller';
+import { avatarUploadMiddleware, uploadAvatarHandler } from './avatar.controller';
 
 export const usersRouter = Router();
 
@@ -54,3 +55,7 @@ usersRouter.patch('/me/settings', validateBody(UpdateAccountSettingsSchema), upd
 
 // POST /api/users/me/device-token – register device token for push notifications
 usersRouter.post('/me/device-token', validateBody(UpsertDeviceTokenSchema), upsertDeviceTokenHandler);
+
+// POST /api/users/me/avatar – upload avatar lên AWS S3
+// Gửi multipart/form-data với field "avatar" (JPEG/PNG/WebP/GIF, tối đa 5MB)
+usersRouter.post('/me/avatar', avatarUploadMiddleware, uploadAvatarHandler);

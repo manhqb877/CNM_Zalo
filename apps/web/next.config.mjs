@@ -7,7 +7,12 @@ const nextConfig = {
   reactStrictMode: true,
   images: {
     remotePatterns: [
-      { protocol: 'https', hostname: 'zync-media.s3.ap-southeast-1.amazonaws.com' },
+      // AWS S3 – avatar storage (my-zalo-app bucket, us-east-1)
+      { protocol: 'https', hostname: 'my-zalo-app.s3.us-east-1.amazonaws.com' },
+      // Wildcard cho mọi S3 bucket/region (future-proof)
+      { protocol: 'https', hostname: '*.s3.amazonaws.com' },
+      { protocol: 'https', hostname: '*.s3.*.amazonaws.com' },
+      // Cloudinary – media tin nhắn, sticker
       { protocol: 'https', hostname: 'res.cloudinary.com' },
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: 'lh3.googleusercontent.com' },

@@ -21,9 +21,12 @@
     "lint": "eslint src --ext .ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1057.0",
+    "@aws-sdk/s3-request-presigner": "^3.1057.0",
     "@google/generative-ai": "^0.24.1",
     "@neondatabase/serverless": "^0.10.4",
     "@socket.io/redis-adapter": "^8.3.0",
+    "@types/multer": "^2.1.0",
     "@zync/shared-types": "*",
     "awilix": "^13.0.3",
     "bcryptjs": "^2.4.3",
@@ -43,6 +46,7 @@
     "mammoth": "^1.12.0",
     "mongoose": "^8.3.1",
     "morgan": "^1.10.0",
+    "multer": "^2.1.1",
     "nodemailer": "^8.0.2",
     "pgvector": "^0.2.1",
     "prom-client": "^15.1.2",
