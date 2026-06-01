@@ -212,8 +212,8 @@ export async function register(email: string, username: string): Promise<void> {
 
   const otp = generateOtp();
   await storeOtp(normalizedEmail, otp);
-  await sendOtp(normalizedEmail, otp);
-  logger.info(`OTP issued for ${normalizedEmail}`);
+  await sendOtp(normalizedEmail, otp, 'register');
+  logger.info(`[Auth] Register OTP issued for ${normalizedEmail}`);
 }
 
 // ─── Verify OTP ──────────────────────────────────────────────────────────────
@@ -287,8 +287,8 @@ export async function requestLoginOtpWithPassword(email: string, password: strin
 
   const otp = generateOtp();
   await storeOtp(normalizedEmail, otp);
-  await sendOtp(normalizedEmail, otp);
-  logger.info(`Password OTP issued for ${normalizedEmail}`);
+  await sendOtp(normalizedEmail, otp, 'login');
+  logger.info(`[Auth] Login OTP issued for ${normalizedEmail}`);
 }
 
 export async function verifyLoginWithPasswordAndOtp(
@@ -338,8 +338,8 @@ export async function requestForgotPasswordOtp(email: string): Promise<void> {
 
   const otp = generateOtp();
   await storeOtp(normalizedEmail, otp);
-  await sendOtp(normalizedEmail, otp);
-  logger.info(`Forgot password OTP issued for ${normalizedEmail}`);
+  await sendOtp(normalizedEmail, otp, 'reset-password');
+  logger.info(`[Auth] Reset-password OTP issued for ${normalizedEmail}`);
 }
 
 export async function resetForgotPassword(email: string, otp: string, newPassword: string): Promise<void> {
