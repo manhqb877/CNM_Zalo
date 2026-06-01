@@ -1,0 +1,16 @@
+<svg width="256" height="96" viewBox="0 0 256 96" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ZYNC">
+  <path d="M24 12h48c11.046 0 20 8.954 20 20v32c0 11.046-8.954 20-20 20H24C12.954 84 4 75.046 4 64V32C4 20.954 12.954 12 24 12Z" fill="url(#paint0_linear)"/>
+  <path d="M31 33h34L32 63h33" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M68 33h3c4.971 0 9 4.029 9 9v12c0 4.971-4.029 9-9 9h-3" stroke="#A7FFF0" stroke-width="6" stroke-linecap="round"/>
+  <path d="M28 63h-3c-4.971 0-9-4.029-9-9V42c0-4.971 4.029-9 9-9h3" stroke="#A7FFF0" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="31" cy="33" r="5" fill="#CFFDF5"/>
+  <circle cx="65" cy="63" r="5" fill="#CFFDF5"/>
+  <text x="108" y="65" fill="#082F49" font-family="Inter, Arial, sans-serif" font-size="52" font-weight="900" letter-spacing="4">ZYNC</text>
+  <defs>
+    <linearGradient id="paint0_linear" x1="8" y1="12" x2="87.5" y2="89" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#093047"/>
+      <stop offset="0.52" stop-color="#0E7C73"/>
+      <stop offset="1" stop-color="#1ED8B5"/>
+    </linearGradient>
+  </defs>
+</svg>

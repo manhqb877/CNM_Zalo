@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ESNext"],
+    "jsx": "react-native",
+    "paths": {
+      "@zync/shared-types": ["../../packages/shared-types/src/index.ts"]
+    }
+  },
+  "include": ["src", "app"]
+}

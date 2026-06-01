@@ -1,0 +1,37 @@
+{
+  "name": "zync-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Zalo Clone – Real-time Messaging Platform",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:server": "npm run dev --workspace=apps/server",
+    "dev:server:lan": "npm run dev:lan --workspace=apps/server",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "dev:web:lan": "npm run dev:lan --workspace=apps/web",
+    "dev:mobile": "npm run start --workspace=apps/mobile",
+    "dev:mobile:lan": "npm run start:lan --workspace=apps/mobile",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "docker": "docker compose -f infra/docker-compose.yml up -d redis redpanda redpanda-console coturn",
+    "docker:up": "docker compose -f infra/docker-compose.yml up -d",
+    "docker:down": "docker compose -f infra/docker-compose.yml down",
+    "docker:logs": "docker compose -f infra/docker-compose.yml logs -f"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "devDependencies": {
+    "expo": "^54.0.33",
+    "typescript": "^5.4.0"
+  },
+  "dependencies": {
+    "expo-device": "^55.0.15"
+  }
+}

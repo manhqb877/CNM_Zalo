@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "Zync",
+    "slug": "zync-mobile",
+    "scheme": "zyncmobile",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#eaf1f8"
+    },
+    "plugins": [
+      "expo-head",
+      "expo-video",
+      [
+        "@config-plugins/react-native-webrtc",
+        {
+          "cameraPermission": "ZYNC cần camera để gọi video",
+          "microphonePermission": "ZYNC cần microphone để gọi điện"
+        }
+      ]
+    ],
+    "android": {
+      "package": "com.binhdev_zync.zyncmobile",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#eaf1f8"
+      },
+      "permissions": [
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.CAMERA",
+        "android.permission.INTERNET",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.WAKE_LOCK",
+        "android.permission.BLUETOOTH"
+      ]
+    },
+    "extra": {
+      "eas": {
+        "projectId": "1c764c75-fc75-40d0-9316-a1b095ce864d"
+      }
+    },
+    "owner": "binhdev_mobile"
+  }
+}
